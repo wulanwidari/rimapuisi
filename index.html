@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buku Interaktif & Kuis: Pesona Rima Puisi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #4f46e5; /* Indigo 600 */
+            --primary-light: #e0e7ff; /* Indigo 100 */
+            --text-main: #334155; /* Slate 700 */
+            --text-muted: #64748b; /* Slate 500 */
+            --bg-page: #fdfbf7; /* Warm off-white */
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 */
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        h1, h2, h3, .serif-font, .poem-text {
+            font-family: 'Merriweather', serif;
+        }
+
+        /* Smooth transitions */
+        .page-transition {
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Glassmorphism for UI elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+        }
+
+        .book-wrapper {
+            perspective: 1200px;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .book-page-content {
+            width: 100%;
+            background-color: var(--bg-page);
+            padding: 2.5rem 3rem;
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: 
+                inset 5px 0 15px rgba(0,0,0,0.03), 
+                0 15px 35px rgba(0,0,0,0.1),
+                inset -2px 0 5px rgba(0,0,0,0.02);
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: left center;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.8s ease;
+            backface-visibility: hidden;
+            /* Spine shadow effect */
+            background-image: linear-gradient(to right, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.02) 2%, rgba(0,0,0,0) 5%);
+            border-left: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 640px) {
+            .book-page-content {
+                padding: 1.5rem;
+                border-radius: 8px;
+            }
+        }
+
+        /* Page states for 3D effect */
+        .page-active {
+            transform: rotateY(0deg);
+            z-index: 10;
+            position: relative;
+            opacity: 1;
+        }
+
+        .page-upcoming {
+            transform: rotateY(0deg);
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .page-passed {
+            transform: rotateY(-180deg);
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .poem-display {
+            background-color: #fff;
+            border-left: 3px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1.2rem 0;
+            border-radius: 0 12px 12px 0;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .poem-display::before {
+            content: '\201C';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            font-size: 4rem;
+            color: var(--primary-light);
+            font-family: serif;
+            line-height: 1;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .poem-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #475569; /* Slate 600 */
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+        
+        .rhyme-highlight {
+            font-weight: 700;
+            color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.1);
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #312e81; /* Indigo 900 */
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-desc {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+        }
+
+        @keyframes fadeInRise {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .anim-fade-in {
+            animation: fadeInRise 0.6s ease-out forwards;
+        }
+
+        /* Complex Quiz Options */
+        .complex-option {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0;
+        }
+        .complex-option:hover {
+            border-color: #a5b4fc;
+            background-color: #f8fafc;
+        }
+        .complex-option input:checked + div {
+            background-color: var(--primary-light);
+            border-color: var(--primary);
+        }
+        .complex-option input:checked + div .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .check-icon {
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .ans-correct {
+            background-color: #dcfce7 !important; 
+            border-color: #22c55e !important; 
+        }
+        .ans-wrong {
+            background-color: #fee2e2 !important; 
+            border-color: #ef4444 !important; 
+        }
+        
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="view-login" class="flex-grow flex items-center justify-center p-4 page-transition">
+        <div class="glass-panel w-full max-w-md p-8 md:p-10 rounded-3xl transform transition-all hover:-translate-y-1">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 mb-6 transform rotate-3">
+                    <i class="fas fa-book-open text-4xl -rotate-3"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-indigo-950 mb-3 serif-font">Pesona Rima</h1>
+                <p class="text-slate-500 font-medium">Eksplorasi Keindahan Bunyi Puisi</p>
+            </div>
+            
+            <form id="form-login" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nama Lengkap</label>
+                    <input type="text" id="input-name" required placeholder="Ketik nama kamu..." 
+                        class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 bg-white/50 focus:bg-white focus:ring-0 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400 font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Kelas</label>
+                    <input type="text" id="input-class" required placeholder="Ketik kelasmu (Misal: 8A, VII B)..." 
+                        class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 bg-white/50 focus:bg-white focus:ring-0 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400 font-medium">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5 ml-1">Nama Sekolah</label>
+                    <input type="text" id="input-school" required placeholder="Ketik nama sekolahmu..." 
+                        class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-200 bg-white/50 focus:bg-white focus:ring-0 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400 font-medium">
+                </div>
+                <button type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all flex items-center justify-center gap-3 text-lg mt-4 group">
+                    <span>Mulai Membaca</span>
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-slate-200/60 flex items-center justify-center gap-4">
+                <img src="https://i.imgur.com/ZdXmh58.png" alt="Wulan Widari Endah, S.Pd." class="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white" onerror="this.src='https://placehold.co/100x100/e2e8f0/64748b?text=W'">
+                <div class="text-left">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Dikreasikan oleh:</div>
+                    <div class="text-sm font-bold text-indigo-950">Wulan Widari Endah, S.Pd.</div>
+                    <div class="text-xs font-medium text-slate-600">Guru SMPN 3 Cilegon</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div id="view-app" class="hidden flex-grow flex-col h-screen overflow-hidden">
+        
+        <header class="glass-panel z-20 py-3 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center shrink-0 border-b border-white/50">
+            <div class="flex items-center gap-4 w-full sm:w-auto mb-3 sm:mb-0">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-sm">
+                    <i class="fas fa-feather-alt text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-indigo-950 text-lg leading-tight serif-font">Pesona Rima</h2>
+                    <p id="label-user" class="text-sm font-medium text-slate-500 truncate max-w-[200px] sm:max-w-xs">Siswa</p>
+                </div>
+            </div>
+            
+            <div class="flex bg-slate-200/70 p-1.5 rounded-xl w-full sm:w-auto overflow-x-auto hide-scroll">
+                <button onclick="navTo('book')" id="tab-book" class="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-book-reader"></i> <span class="hidden sm:inline">Buku Materi</span>
+                </button>
+                <button onclick="navTo('quiz')" id="tab-quiz" class="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-indigo-600 hover:bg-white/50 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-brain"></i> <span class="hidden sm:inline">Uji Pemahaman</span>
+                </button>
+                <button onclick="navTo('board')" id="tab-board" class="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-indigo-600 hover:bg-white/50 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-crown"></i> <span class="hidden sm:inline">Peringkat</span>
+                </button>
+            </div>
+        </header>
+
+        <main id="area-book" class="flex-grow overflow-hidden flex flex-col items-center justify-center p-4 sm:p-8 relative">
+            
+            <div class="w-full max-w-4xl flex justify-between items-center mb-6 z-20">
+                <button onclick="turnPrev()" class="w-12 h-12 bg-white rounded-full shadow-md text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center border border-indigo-100" id="ctrl-prev">
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+                <div class="text-sm font-bold text-slate-600 bg-white/80 backdrop-blur px-5 py-2 rounded-full shadow-sm border border-slate-200">
+                    Halaman <span id="label-page" class="text-indigo-600">1</span> / <span id="label-total">5</span>
+                </div>
+                <button onclick="turnNext()" class="w-12 h-12 bg-white rounded-full shadow-md text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center border border-indigo-100" id="ctrl-next">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+
+            <div class="book-wrapper h-[70vh] sm:h-[75vh] flex-grow w-full z-10">
+                
+                <!-- Page 1: Cover/Intro -->
+                <div class="book-page-content page-active overflow-y-auto hide-scroll" id="sheet-1">
+                    <div class="h-full flex flex-col justify-center items-center text-center px-4">
+                        <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-400 mb-8 border-4 border-white shadow-inner">
+                            <i class="fas fa-music text-4xl"></i>
+                        </div>
+                        <h1 class="text-4xl sm:text-5xl font-bold text-indigo-950 mb-6 serif-font leading-tight">Mengagumi Puisi<br>Lewat Rima</h1>
+                        <div class="w-16 h-1.5 bg-indigo-500 mx-auto mb-8 rounded-full"></div>
+                        <p class="text-lg text-slate-600 mb-10 max-w-2xl leading-relaxed">
+                            Rima adalah pengulangan bunyi yang berselang, baik di dalam larik sajak maupun pada akhir larik sajak. 
+                            Selain rima sejajar dan rima silang, mari kita pelajari jenis-jenis rima lainnya yang membuat puisi terdengar indah dan bermakna.
+                        </p>
+                        <div class="inline-flex items-center gap-3 text-indigo-600 font-bold bg-indigo-50 px-6 py-3 rounded-full animate-bounce mt-4 shadow-sm border border-indigo-100">
+                            <span>Mulai Eksplorasi</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 2: Sempurna & Tidak Sempurna -->
+                <div class="book-page-content page-upcoming overflow-y-auto hide-scroll" id="sheet-2">
+                    <div class="mb-10">
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">1</span>
+                            Rima Sempurna
+                        </div>
+                        <p class="section-desc">
+                            Merupakan rima yang <strong>seluruh suku kata terakhir</strong> pada akhir baris teks puisi berbunyi sama persis.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Jika ada jarum yang pa<span class="rhyme-highlight">tah</span></p>
+                            <p class="poem-text">Jangan disimpan di dalam pe<span class="rhyme-highlight">ti</span></p>
+                            <p class="poem-text">Jika ada salah sepa<span class="rhyme-highlight">tah</span></p>
+                            <p class="poem-text">Jangan simpan di dalam ha<span class="rhyme-highlight">ti</span></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">2</span>
+                            Rima Tidak Sempurna
+                        </div>
+                        <p class="section-desc">
+                            Terjadi apabila hanya <strong>sebagian suku kata terakhir</strong> (biasanya vokalnya saja) yang sama dalam teks puisi, sedangkan konsonannya berbeda.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Adakah perisai bertali ram<span class="rhyme-highlight">but</span></p>
+                            <p class="poem-text">Rambutnya dipintal oleh akar cema<span class="rhyme-highlight">ra</span></p>
+                            <p class="poem-text">Adakah kami rasa ta<span class="rhyme-highlight">kut</span></p>
+                            <p class="poem-text">Kami ini muda rema<span class="rhyme-highlight">ja</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="book-page-content page-upcoming overflow-y-auto hide-scroll" id="sheet-3">
+                    <div class="mb-10">
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">3</span>
+                            Rima Mutlak
+                        </div>
+                        <p class="section-desc">
+                            Terjadi jika <strong>seluruh kata memiliki persamaan bunyi</strong> karena terjadinya pengulangan kata yang sama secara utuh di akhir baris.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Embun putih penuhi <span class="rhyme-highlight">pagi</span></p>
+                            <p class="poem-text">Tubuh terjaga dari <span class="rhyme-highlight">mimpi</span></p>
+                            <p class="poem-text">Belajar tekun setiap <span class="rhyme-highlight">pagi</span></p>
+                            <p class="poem-text">Agar tercapai semua <span class="rhyme-highlight">mimpi</span></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">4</span>
+                            Rima Terbuka
+                        </div>
+                        <p class="section-desc">
+                            Rima yang memiliki persamaan bunyi akhir dengan kata berakhiran <strong>huruf vokal</strong>. Membuat teks puisi terdengar lebih ringan dan lembut.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Mentari pagi menyapa jiw<span class="rhyme-highlight">a</span></p>
+                            <p class="poem-text">Angin lembut menari di des<span class="rhyme-highlight">a</span></p>
+                            <p class="poem-text">Langkah kecil menuju as<span class="rhyme-highlight">a</span></p>
+                            <p class="poem-text">Hati pun damai penuh bahagi<span class="rhyme-highlight">a</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="book-page-content page-upcoming overflow-y-auto hide-scroll" id="sheet-4">
+                    <div class="mb-10">
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">5</span>
+                            Rima Tertutup
+                        </div>
+                        <p class="section-desc">
+                            Rima yang memiliki persamaan bunyi akhir dengan kata berakhiran <strong>huruf konsonan</strong>. Memberikan kesan tegas dan lebih berat saat dibacakan.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Jalan panjang penuh rintanga<span class="rhyme-highlight">n</span></p>
+                            <p class="poem-text">Tekad kuat melawan tantanga<span class="rhyme-highlight">n</span></p>
+                            <p class="poem-text">Jangan mundur hadapi tekana<span class="rhyme-highlight">n</span></p>
+                            <p class="poem-text">Terus maju meraih harapa<span class="rhyme-highlight">n</span></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">6</span>
+                            Rima Aliterasi
+                        </div>
+                        <p class="section-desc">
+                            Merupakan <strong>pengulangan bunyi konsonan pada awal kata</strong> dalam satu atau beberapa baris. Berfungsi menimbulkan efek musikal dan penekanan.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text"><span class="rhyme-highlight">B</span>erjalan <span class="rhyme-highlight">b</span>ersama <span class="rhyme-highlight">b</span>intang <span class="rhyme-highlight">b</span>iru</p>
+                            <p class="poem-text"><span class="rhyme-highlight">S</span>enyap <span class="rhyme-highlight">s</span>enja <span class="rhyme-highlight">s</span>entuh <span class="rhyme-highlight">s</span>ukma</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="book-page-content page-upcoming overflow-y-auto hide-scroll" id="sheet-5">
+                    <div class="mb-10">
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">7</span>
+                            Rima Asonansi
+                        </div>
+                        <p class="section-desc">
+                            Merupakan <strong>pengulangan bunyi vokal yang sama</strong> di dalam baris puisi. Membuat irama puisi terasa lembut dan harmonis tanpa harus mengulang kata yang sama.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">L<span class="rhyme-highlight">a</span>ngk<span class="rhyme-highlight">a</span>h pel<span class="rhyme-highlight">a</span>n p<span class="rhyme-highlight">a</span>nj<span class="rhyme-highlight">a</span>ng menuju har<span class="rhyme-highlight">a</span>p<span class="rhyme-highlight">a</span>n</p>
+                            <p class="poem-text">Seny<span class="rhyme-highlight">a</span>p d<span class="rhyme-highlight">a</span>l<span class="rhyme-highlight">a</span>m d<span class="rhyme-highlight">a</span>d<span class="rhyme-highlight">a</span> tersimp<span class="rhyme-highlight">a</span>n</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-10">
+                        <div class="section-title">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">8</span>
+                            Rima Disonansi
+                        </div>
+                        <p class="section-desc">
+                            Pengulangan bunyi vokal yang <strong>tidak sama atau kontras</strong>. Menimbulkan kesan kasar, tegang, atau tidak harmonis, sering untuk menggambarkan konflik atau kegelisahan.
+                        </p>
+                        <div class="poem-display">
+                            <p class="poem-text">Denting retak, napas sesak, langkah tersendat</p>
+                            <p class="poem-text">Kata patah, rasa kasar, hati terjerat</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-12 mb-8 bg-indigo-50 p-8 rounded-2xl border border-indigo-100">
+                        <h3 class="text-2xl font-bold text-indigo-900 mb-4 serif-font">Siap Menguji Pemahamanmu?</h3>
+                        <p class="text-slate-600 mb-6">Selesaikan tantangan soal HOTS dan buktikan kamu master puisi!</p>
+                        <button onclick="navTo('quiz')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all inline-flex items-center gap-3 text-lg group">
+                            <i class="fas fa-brain group-hover:scale-110 transition-transform"></i> Mulai Uji Pemahaman
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="mt-6 text-slate-400 text-sm sm:hidden flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full backdrop-blur">
+                <i class="fas fa-arrows-alt-h"></i> <span class="font-medium">Geser untuk membalik halaman</span>
+            </div>
+        </main>
+
+        <main id="area-quiz" class="hidden flex-grow overflow-y-auto p-4 sm:p-8">
+            <div class="max-w-4xl mx-auto" id="quiz-wrapper">
+                
+                <div id="quiz-start" class="glass-panel rounded-3xl p-10 text-center anim-fade-in mt-10">
+                    <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-8 shadow-lg flex items-center justify-center text-white transform rotate-12">
+                        <i class="fas fa-clipboard-check text-5xl -rotate-12"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-indigo-950 mb-4 serif-font">Evaluasi Pilihan Ganda Kompleks</h2>
+                    <p class="text-slate-600 mb-8 max-w-xl mx-auto text-lg">
+                        Pada evaluasi ini, kamu akan menghadapi soal analisis. <strong>Pilihlah kombinasi pernyataan yang paling tepat</strong> berdasarkan puisi yang disajikan. Baca dengan teliti!
+                    </p>
+                    <button onclick="beginQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-transform hover:scale-105 text-lg">
+                        Mulai Mengerjakan
+                    </button>
+                </div>
+
+                <div id="quiz-active" class="hidden pb-20">
+                    <div class="glass-panel p-5 rounded-2xl mb-6 flex justify-between items-center sticky top-4 z-30 shadow-md">
+                        <div class="font-bold text-slate-700">Soal <span id="q-current" class="text-indigo-600 text-xl">1</span> / <span id="q-total">5</span></div>
+                        <div class="w-1/2 bg-slate-200 rounded-full h-3">
+                            <div id="q-progress" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-700" style="width: 20%"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 sm:p-10 shadow-lg mb-8 relative border-t-4 border-t-indigo-500">
+                        
+                        <div id="q-stimulus" class="poem-display text-lg mb-8 hidden"></div>
+
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-6 leading-relaxed serif-font" id="q-text">
+                            Pertanyaan...
+                        </h3>
+                        
+                        <!-- For Complex MCQs, we use custom styling to look like statement combinations -->
+                        <div class="space-y-4" id="q-options">
+                            <!-- Options generated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end sticky bottom-4 z-30">
+                        <button id="btn-submit" onclick="verifyAnswer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg w-full sm:w-auto">
+                            Konfirmasi Jawaban
+                        </button>
+                        <button id="btn-next" onclick="loadNextQ()" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 text-lg w-full sm:w-auto">
+                            Soal Berikutnya <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div id="q-feedback" class="mt-8 p-6 rounded-2xl hidden flex-col sm:flex-row gap-5 items-start anim-fade-in shadow-inner border-2">
+                        <div id="fb-icon-box" class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-2xl">
+                            <i id="fb-icon" class="fas"></i>
+                        </div>
+                        <div>
+                            <h4 id="fb-title" class="font-bold text-xl mb-2 serif-font">Status</h4>
+                            <p id="fb-desc" class="text-slate-700 text-base leading-relaxed">Penjelasan...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quiz-end" class="hidden glass-panel rounded-3xl p-10 text-center anim-fade-in mt-10">
+                    <div class="relative w-32 h-32 mx-auto mb-6">
+                        <div class="absolute inset-0 bg-yellow-100 rounded-full animate-ping opacity-75"></div>
+                        <div class="relative w-full h-full bg-white rounded-full flex items-center justify-center text-6xl shadow-xl border-4 border-yellow-400" id="end-emoji">
+                            🏆
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold text-indigo-950 mb-2 serif-font">Evaluasi Selesai!</h2>
+                    <p class="text-slate-600 mb-8 text-lg">Kerja yang luar biasa, <span id="end-name" class="font-bold text-indigo-600">Siswa</span>!</p>
+                    
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-100 rounded-3xl p-8 mb-10 max-w-sm mx-auto shadow-inner">
+                        <p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-2">Skor Pencapaian</p>
+                        <div class="text-7xl font-extrabold text-indigo-700 tracking-tighter" id="end-score">0</div>
+                        <div class="h-1 w-16 bg-indigo-200 mx-auto my-4 rounded-full"></div>
+                        <p class="text-lg font-bold" id="end-category">Memproses...</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
+                        <button onclick="navTo('board')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-6 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-lg">
+                            <i class="fas fa-trophy"></i> Lihat Papan Peringkat
+                        </button>
+                        <button onclick="navTo('book')" class="bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-indigo-300 font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-lg">
+                            <i class="fas fa-book-open"></i> Pelajari Ulang
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <main id="area-board" class="hidden flex-grow overflow-y-auto p-4 sm:p-8">
+            <div class="max-w-4xl mx-auto pb-10">
+                <div class="text-center mb-10 anim-fade-in">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg mb-6 transform -rotate-3">
+                        <i class="fas fa-crown text-4xl rotate-3"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-indigo-950 mb-3 serif-font">Papan Peringkat Kehormatan</h2>
+                    <p class="text-slate-600 font-medium">Daftar pencetak skor tertinggi dari berbagai sekolah.</p>
+                </div>
+
+                <div class="glass-panel rounded-3xl shadow-xl overflow-hidden anim-fade-in border border-white/50" style="animation-delay: 0.1s;">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
+                            <thead>
+                                <tr class="bg-indigo-900 text-indigo-50 text-sm uppercase tracking-wider">
+                                    <th class="py-5 px-4 font-bold text-center w-20">Rank</th>
+                                    <th class="py-5 px-4 font-bold">Nama Siswa</th>
+                                    <th class="py-5 px-4 font-bold">Kelas</th>
+                                    <th class="py-5 px-4 font-bold">Asal Sekolah</th>
+                                    <th class="py-5 px-4 font-bold text-center w-28">Skor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="board-body" class="divide-y divide-slate-200 bg-white/50">
+                                <!-- Data will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Konfigurasi Database Cloud (Otomatis disediakan oleh platform)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rima-kuis-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        let db, auth;
+        let isDbReady = false;
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                isDbReady = true;
+
+                const initToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initToken) {
+                    signInWithCustomToken(auth, initToken).then(listenToLeaderboard).catch(console.error);
+                } else {
+                    signInAnonymously(auth).then(listenToLeaderboard).catch(console.error);
+                }
+            } catch (err) {
+                console.error("Gagal memuat Cloud Database:", err);
+            }
+        }
+
+        let user = { name: '', class: '', school: '' };
+        let bookPg = 1;
+        const totalPg = 5;
+        let ranks = []; // Data akan ditarik secara realtime dari Cloud Database
+
+        function listenToLeaderboard() {
+            if (!auth.currentUser || !isDbReady) return;
+            const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            
+            onSnapshot(lbRef, (snapshot) => {
+                const fetchedRanks = [];
+                snapshot.forEach(doc => {
+                    fetchedRanks.push(doc.data());
+                });
+                
+                // Urutkan nilai dari tertinggi ke terendah (Sort di memori JS)
+                fetchedRanks.sort((a, b) => b.score - a.score || b.time - a.time);
+                ranks = fetchedRanks;
+                
+                // Refresh tampilan papan peringkat jika tab sedang aktif
+                if (!document.getElementById('area-board').classList.contains('hidden')) {
+                    refreshBoard();
+                }
+            }, (error) => {
+                console.error("Gagal membaca Papan Peringkat:", error);
+            });
+        }
+
+        // Complex Multiple Choice Questions (Pilihan Ganda Kompleks)
+        const qData = [
+            {
+                stimulus: "Puisi A:\nAnak ayam turun sepuluh\nMati satu tinggal sembilan\nTuntutlah ilmu dengan sungguh-sungguh\nSupaya engkau tidak ketinggalan\n\nPuisi B:\nPerteguh jua alat perahumu\nHasilkan bekal air dan kayu\nDayung pengayuh taruh di situ\nSupaya laju perahumu itu",
+                text: "Berdasarkan kedua penggalan puisi di atas, manakah pernyataan komparatif di bawah ini yang BENAR mengenai penggunaan rima?",
+                options: [
+                    "A. Puisi A menggunakan rima tidak sempurna, sedangkan Puisi B menggunakan rima terbuka.",
+                    "B. Puisi A menggunakan rima silang (a-b-a-b) dengan jenis rima tertutup pada larik 1 & 3, sedangkan Puisi B menggunakan rima mutlak.",
+                    "C. Puisi A menggunakan rima silang (a-b-a-b) dengan rima tertutup pada semua baris, sedangkan Puisi B menggunakan rima terbuka berakhiran vokal 'u'.",
+                    "D. Puisi A dominan dengan rima asonansi, sedangkan Puisi B dominan dengan rima aliterasi."
+                ],
+                correct: 2, // C
+                explanation: "Mari analisis: <br>Puisi A berakhiran: sepul<strong>uh</strong> (konsonan h), sembil<strong>an</strong> (konsonan n), sungg<strong>uh</strong> (konsonan h), ketinggal<strong>an</strong> (konsonan n). Karena berakhiran konsonan, ini adalah <strong>Rima Tertutup</strong>. Polanya a-b-a-b.<br>Puisi B berakhiran: perahu<strong>mu</strong>, ka<strong>yu</strong>, i<strong>tu</strong>, i<strong>tu</strong>. Semuanya berakhiran vokal 'u'. Ini adalah ciri <strong>Rima Terbuka</strong>."
+            },
+            {
+                stimulus: "Perhatikan larik-larik puisi berikut:\n(1) Dentang denting dawai dipetik\n(2) Burung camar terbang berkelana\n(3) Kelam kabut kian kentara\n(4) Ombak memecah di bibir pantai",
+                text: "Dari larik-larik di atas, pasangan larik manakah yang menggunakan gaya majas Rima Aliterasi (pengulangan konsonan awal)?",
+                options: [
+                    "A. Larik (1) dan (2)",
+                    "B. Larik (1) dan (3)",
+                    "C. Larik (2) dan (4)",
+                    "D. Larik (3) dan (4)"
+                ],
+                correct: 1, // B
+                explanation: "<strong>Rima Aliterasi</strong> adalah pengulangan bunyi konsonan di awal kata.<br>Larik (1): <strong>D</strong>entang <strong>d</strong>enting <strong>d</strong>awai <strong>d</strong>ipetik (pengulangan 'D').<br>Larik (3): <strong>K</strong>elam <strong>k</strong>abut <strong>k</strong>ian <strong>k</strong>entara (pengulangan 'K').<br>Jadi, (1) dan (3) mengandung rima aliterasi."
+            },
+            {
+                stimulus: "Dalam penciptaan puisi, penyair seringkali memanfaatkan rima untuk memperkuat suasana (mood). \n\nMisalkan seorang penyair menulis bait: <i>'Keras keriut kawat berkarat, berat merayap tersendat-sendat'</i>.",
+                text: "Berdasarkan materi yang telah dibaca, jenis rima apa yang mendominasi bait tersebut dan apa efek suasana yang ditimbulkannya?",
+                options: [
+                    "A. Rima Sempurna; menimbulkan kesan merdu dan damai.",
+                    "B. Rima Asonansi (vokal 'a'); menimbulkan kesan lembut dan mengalir.",
+                    "C. Rima Disonansi dan Tertutup (konsonan 't' & 'r'); menimbulkan kesan kasar, tegang, atau berat.",
+                    "D. Rima Mutlak; menegaskan makna kata secara berulang-ulang."
+                ],
+                correct: 2, // C
+                explanation: "Bait tersebut dipenuhi bunyi konsonan kasar (k, r, t) dan pengulangan yang tidak harmonis. Sesuai materi, ini adalah bentuk <strong>Rima Disonansi</strong> (bunyi kontras/kasar) dipadukan dengan <strong>Rima Tertutup</strong> (akhiran konsonan 't'). Tujuannya adalah menciptakan suasana yang tegang, berat, atau tidak nyaman, cocok dengan deskripsi 'kawat berkarat'."
+            },
+            {
+                stimulus: "Cermati pernyataan-pernyataan berikut mengenai Rima Tidak Sempurna dan Rima Sempurna:\nI. Rima sempurna mensyaratkan seluruh suku kata terakhir harus sama (cth: patah - sepatah).\nII. Rima tidak sempurna hanya memerlukan kesamaan huruf vokal terakhir saja (cth: rambut - takut).\nIII. Rima sempurna membuat puisi terdengar lebih musikal dibandingkan rima tidak sempurna.\nIV. Rima tidak sempurna dilarang digunakan dalam puisi lama seperti pantun.",
+                text: "Kombinasi pernyataan yang paling TEPAT adalah...",
+                options: [
+                    "A. Pernyataan I dan II benar.",
+                    "B. Pernyataan II dan IV benar.",
+                    "C. Pernyataan I, II, dan III benar.",
+                    "D. Semua pernyataan (I, II, III, IV) benar."
+                ],
+                correct: 0, // A
+                explanation: "Mari evaluasi:<br>- Pernyataan I <strong>Benar</strong> sesuai definisi buku.<br>- Pernyataan II <strong>Benar</strong> (ramb<strong>ut</strong> - tak<strong>ut</strong> memiliki vokal 'u' yang sama di suku kata terakhir, tapi konsonan pembentuk suku katanya beda 'but' vs 'kut').<br>- Pernyataan III subjektif dan tidak selalu benar (rima tak sempurna juga bisa musikal).<br>- Pernyataan IV <strong>Salah</strong>, pantun sering menggunakan rima tak sempurna selama vokalnya selaras. Oleh karena itu, hanya I dan II yang pasti tepat berdasarkan teori dasar."
+            },
+            {
+                stimulus: "Sebuah puisi kontemporer berbunyi:\n<i>'Mimpi pagi berlari pergi'</i>\n<i>'Mencari arti di ujung hari'</i>",
+                text: "Analisislah gaya rima pada penggalan puisi di atas. Kategori rima apa saja yang dapat ditemukan di dalamnya? (Pilih analisis yang paling komprehensif)",
+                options: [
+                    "A. Hanya mengandung Rima Terbuka karena semua baris diakhiri huruf vokal 'i'.",
+                    "B. Mengandung Rima Terbuka di akhir baris dan Rima Asonansi (pengulangan vokal 'i') yang sangat dominan di tengah baris.",
+                    "C. Mengandung Rima Mutlak karena mengulang kata yang sama di setiap baris.",
+                    "D. Mengandung Rima Sempurna antara kata 'pagi' dan 'pergi'."
+                ],
+                correct: 1, // B
+                explanation: "Analisis komprehensif:<br>1. Kata berakhiran 'i' (pergi, hari) = <strong>Rima Terbuka</strong>.<br>2. Di dalam baris, terdapat pengulangan vokal 'i' yang intens (m<strong>i</strong>mp<strong>i</strong> pag<strong>i</strong> berlar<strong>i</strong> perg<strong>i</strong>). Ini adalah definisi <strong>Rima Asonansi</strong>. <br>Oleh karena itu, opsi B paling lengkap menjabarkan gaya rima yang digunakan (kombinasi terbuka dan asonansi)."
+            }
+        ];
+
+        let currQ = 0;
+        let scoreVal = 0;
+        let hasAnswered = false;
+
+        const domLogin = document.getElementById('view-login');
+        const domApp = document.getElementById('view-app');
+        const formLg = document.getElementById('form-login');
+        const lblUser = document.getElementById('label-user');
+        
+        const views = {
+            'book': document.getElementById('area-book'),
+            'quiz': document.getElementById('area-quiz'),
+            'board': document.getElementById('area-board')
+        };
+        const tabs = {
+            'book': document.getElementById('tab-book'),
+            'quiz': document.getElementById('tab-quiz'),
+            'board': document.getElementById('tab-board')
+        };
+
+        formLg.addEventListener('submit', (e) => {
+            e.preventDefault();
+            user.name = document.getElementById('input-name').value.trim();
+            user.class = document.getElementById('input-class').value.trim();
+            user.school = document.getElementById('input-school').value.trim();
+            
+            lblUser.textContent = `${user.name} (${user.class})`;
+            
+            domLogin.style.opacity = '0';
+            domLogin.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                domLogin.classList.add('hidden');
+                domApp.classList.remove('hidden');
+                domApp.classList.add('flex');
+                navTo('book');
+            }, 400);
+        });
+
+        function navTo(target) {
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            
+            Object.values(tabs).forEach(t => {
+                t.className = 'flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-indigo-600 hover:bg-white/50 transition-all flex items-center justify-center gap-2';
+            });
+
+            views[target].classList.remove('hidden');
+            
+            const activeTab = tabs[target];
+            activeTab.className = 'flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm transition-all flex items-center justify-center gap-2';
+
+            if (target === 'board') refreshBoard();
+        }
+
+        function renderBook() {
+            document.getElementById('label-page').textContent = bookPg;
+            document.getElementById('ctrl-prev').disabled = bookPg === 1;
+            document.getElementById('ctrl-next').disabled = bookPg === totalPg;
+
+            for (let i = 1; i <= totalPg; i++) {
+                const sheet = document.getElementById(`sheet-${i}`);
+                if (!sheet) continue;
+
+                sheet.classList.remove('page-active', 'page-upcoming', 'page-passed');
+                
+                if (i === bookPg) {
+                    sheet.classList.add('page-active');
+                } else if (i < bookPg) {
+                    sheet.classList.add('page-passed');
+                } else {
+                    sheet.classList.add('page-upcoming');
+                }
+            }
+        }
+
+        function turnNext() { if (bookPg < totalPg) { bookPg++; renderBook(); } }
+        function turnPrev() { if (bookPg > 1) { bookPg--; renderBook(); } }
+
+        // Swipe logic for touch devices
+        let startX = 0;
+        document.querySelector('.book-wrapper').addEventListener('touchstart', e => { startX = e.changedTouches[0].screenX; }, {passive: true});
+        document.querySelector('.book-wrapper').addEventListener('touchend', e => {
+            let endX = e.changedTouches[0].screenX;
+            if (endX < startX - 60) turnNext();
+            if (endX > startX + 60) turnPrev();
+        }, {passive: true});
+
+        function beginQuiz() {
+            document.getElementById('quiz-start').classList.add('hidden');
+            document.getElementById('quiz-active').classList.remove('hidden');
+            document.getElementById('q-total').textContent = qData.length;
+            currQ = 0;
+            scoreVal = 0;
+            prepQuestion();
+        }
+
+        function prepQuestion() {
+            hasAnswered = false;
+            const q = qData[currQ];
+            
+            document.getElementById('q-current').textContent = currQ + 1;
+            document.getElementById('q-progress').style.width = `${((currQ) / qData.length) * 100}%`;
+
+            document.getElementById('q-text').innerHTML = q.text;
+            
+            const stimBox = document.getElementById('q-stimulus');
+            if (q.stimulus) {
+                stimBox.innerHTML = `<p class="poem-text">${q.stimulus.replace(/\n/g, '<br>')}</p>`;
+                stimBox.classList.remove('hidden');
+            } else {
+                stimBox.classList.add('hidden');
+            }
+
+            const optBox = document.getElementById('q-options');
+            optBox.innerHTML = '';
+            
+            q.options.forEach((optText, idx) => {
+                const lbl = document.createElement('label');
+                lbl.className = 'complex-option relative flex items-start p-4 rounded-xl bg-white';
+                
+                lbl.innerHTML = `
+                    <div class="flex items-center h-6 mt-1">
+                        <input type="radio" name="ans" value="${idx}" class="peer sr-only">
+                        <div class="w-6 h-6 border-2 border-slate-300 rounded-full flex items-center justify-center bg-white peer-checked:border-indigo-600 z-10 transition-colors">
+                            <div class="w-3 h-3 bg-indigo-600 rounded-full check-icon"></div>
+                        </div>
+                    </div>
+                    <div class="ml-4 text-slate-700 leading-relaxed font-medium flex-1">
+                        ${optText}
+                    </div>
+                    <div class="absolute inset-0 rounded-xl border-2 border-transparent peer-checked:border-indigo-600 pointer-events-none transition-colors"></div>
+                    <div class="absolute inset-0 rounded-xl bg-indigo-50 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></div>
+                `;
+                
+                lbl.querySelector('input').addEventListener('change', () => {
+                    document.getElementById('btn-submit').disabled = false;
+                });
+                
+                optBox.appendChild(lbl);
+            });
+
+            document.getElementById('btn-submit').classList.remove('hidden');
+            document.getElementById('btn-submit').disabled = true;
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('q-feedback').classList.add('hidden');
+        }
+
+        function verifyAnswer() {
+            if (hasAnswered) return;
+            const chosen = document.querySelector('input[name="ans"]:checked');
+            if (!chosen) return;
+
+            hasAnswered = true;
+            const ansIdx = parseInt(chosen.value);
+            const q = qData[currQ];
+            const isOk = ansIdx === q.correct;
+
+            // Lock inputs
+            document.querySelectorAll('input[name="ans"]').forEach(el => el.disabled = true);
+
+            // Styling correct/wrong
+            const optionDivs = document.querySelectorAll('.complex-option');
+            optionDivs[q.correct].classList.add('ans-correct');
+            
+            if (!isOk) {
+                optionDivs[ansIdx].classList.add('ans-wrong');
+            } else {
+                scoreVal += (100 / qData.length); // Dynamic score based on Q count
+            }
+
+            // Show Feedback Box
+            const fbBox = document.getElementById('q-feedback');
+            const fbIcon = document.getElementById('fb-icon');
+            const fbBoxIcon = document.getElementById('fb-icon-box');
+            
+            fbBox.className = 'mt-8 p-6 rounded-2xl flex flex-col sm:flex-row gap-5 items-start anim-fade-in border-2 shadow-inner';
+            
+            if (isOk) {
+                fbBox.classList.add('bg-emerald-50', 'border-emerald-200');
+                fbBoxIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-2xl bg-emerald-100 text-emerald-600 shadow-sm';
+                fbIcon.className = 'fas fa-check';
+                document.getElementById('fb-title').textContent = 'Analisis Tepat!';
+                document.getElementById('fb-title').className = 'font-bold text-xl mb-2 serif-font text-emerald-900';
+            } else {
+                fbBox.classList.add('bg-red-50', 'border-red-200');
+                fbBoxIcon.className = 'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-2xl bg-red-100 text-red-600 shadow-sm';
+                fbIcon.className = 'fas fa-times';
+                document.getElementById('fb-title').textContent = 'Analisis Kurang Tepat';
+                document.getElementById('fb-title').className = 'font-bold text-xl mb-2 serif-font text-red-900';
+            }
+            
+            document.getElementById('fb-desc').innerHTML = q.explanation;
+            fbBox.classList.remove('hidden');
+
+            document.getElementById('btn-submit').classList.add('hidden');
+            const nextBtn = document.getElementById('btn-next');
+            nextBtn.classList.remove('hidden');
+            
+            if (currQ === qData.length - 1) {
+                nextBtn.innerHTML = 'Lihat Hasil Evaluasi <i class="fas fa-flag-checkered"></i>';
+            }
+        }
+
+        function loadNextQ() {
+            if (currQ < qData.length - 1) {
+                currQ++;
+                prepQuestion();
+                document.getElementById('q-active').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-active').classList.add('hidden');
+            const endScreen = document.getElementById('quiz-end');
+            endScreen.classList.remove('hidden');
+            
+            document.getElementById('end-name').textContent = user.name;
+            
+            const finalScore = Math.round(scoreVal);
+            recordScore(user.name, user.class, user.school, finalScore);
+            
+            // Animation for score
+            const scEl = document.getElementById('end-score');
+            const catEl = document.getElementById('end-category');
+            const emojiEl = document.getElementById('end-emoji');
+            
+            let displaySc = 0;
+            const timer = setInterval(() => {
+                if(displaySc < finalScore) {
+                    displaySc += Math.ceil(finalScore / 20);
+                    if(displaySc > finalScore) displaySc = finalScore;
+                    scEl.textContent = displaySc;
+                } else {
+                    clearInterval(timer);
+                    scEl.textContent = finalScore;
+                    if (finalScore === 100) {
+                        catEl.textContent = "Sempurna! Pemahaman HOTS Luar Biasa.";
+                        catEl.className = "text-lg font-bold text-emerald-600";
+                        emojiEl.textContent = "🏅";
+                    } else if (finalScore >= 80) {
+                        catEl.textContent = "Hebat! Daya analisismu tajam.";
+                        catEl.className = "text-lg font-bold text-indigo-600";
+                        emojiEl.textContent = "🌟";
+                    } else if (finalScore >= 60) {
+                        catEl.textContent = "Cukup baik, mari pertajam lagi analisismu.";
+                        catEl.className = "text-lg font-bold text-amber-600";
+                        emojiEl.textContent = "👍";
+                    } else {
+                        catEl.textContent = "Perlu membaca ulang materi dengan lebih teliti.";
+                        catEl.className = "text-lg font-bold text-red-500";
+                        emojiEl.textContent = "📚";
+                    }
+                }
+            }, 40);
+            
+            // Allow resetting quiz state for next time tab is clicked
+            document.getElementById('q-progress').style.width = '100%';
+            setTimeout(() => {
+                 document.getElementById('quiz-start').classList.remove('hidden');
+                 endScreen.classList.add('hidden');
+            }, 60000); // reset view after 1 min or handle on tab switch
+        }
+
+        async function recordScore(n, c, s, sc) {
+            const dataToSave = { name: n, class: c, school: s, score: sc, time: Date.now() };
+            
+            // =========================================================================
+            // INTEGRASI GOOGLE SHEETS
+            // TEMPEL (PASTE) URL WEB APP GOOGLE SCRIPT ANDA DI ANTARA TANDA KUTIP INI:
+            // =========================================================================
+            const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw_IrdCyjWOmfzcWQgYVBpn6UHsaXtM_jZtnlMJCrgyTI6lAr8Yc7PIbhxe4lHT3cY/exec"; 
+            
+            if (googleScriptUrl !== "") {
+                fetch(googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Mencegah error CORS di browser
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSave)
+                }).then(() => console.log("Data berhasil terkirim ke Google Sheets!"))
+                  .catch(e => console.error("Gagal mengirim ke Google Sheets:", e));
+            }
+            // =========================================================================
+
+            if (isDbReady && auth.currentUser) {
+                try {
+                    const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                    await addDoc(lbRef, dataToSave);
+                    console.log("Skor berhasil disimpan ke Cloud!");
+                } catch(e) {
+                    console.error("Error saving score:", e);
+                }
+            } else {
+                // Fallback sementara jika cloud belum siap
+                ranks.push(dataToSave);
+                ranks.sort((a, b) => b.score - a.score || b.time - a.time);
+                refreshBoard();
+            }
+        }
+
+        function refreshBoard() {
+            const tbd = document.getElementById('board-body');
+            tbd.innerHTML = '';
+
+            if (ranks.length === 0) {
+                tbd.innerHTML = `<tr><td colspan="5" class="py-10 px-4 text-center text-slate-500 italic">Belum ada pahlawan rima. Jadilah yang pertama!</td></tr>`;
+                return;
+            }
+
+            ranks.forEach((r, i) => {
+                const pos = i + 1;
+                let badge = pos;
+                let trStyle = 'hover:bg-indigo-50 transition-colors';
+                let nStyle = 'text-slate-800 font-bold';
+                
+                if (pos === 1) {
+                    badge = '<i class="fas fa-crown text-yellow-500 text-2xl drop-shadow"></i>';
+                    trStyle = 'bg-yellow-50/50 hover:bg-yellow-100/50';
+                } else if (pos === 2) {
+                    badge = '<i class="fas fa-medal text-slate-400 text-2xl drop-shadow"></i>';
+                    trStyle = 'bg-slate-50 hover:bg-slate-100';
+                } else if (pos === 3) {
+                    badge = '<i class="fas fa-medal text-amber-700 text-2xl drop-shadow"></i>';
+                    trStyle = 'bg-orange-50/50 hover:bg-orange-100/50';
+                }
+
+                // Highlight current session user's latest entry
+                if (r.name === user.name && r.class === user.class && r.time > (Date.now() - 5000)) {
+                    trStyle += ' border-l-4 border-l-indigo-500 bg-indigo-50/80';
+                }
+
+                tbd.insertAdjacentHTML('beforeend', `
+                    <tr class="border-b border-slate-200 ${trStyle}">
+                        <td class="py-4 px-4 text-center font-bold text-slate-500">${badge}</td>
+                        <td class="py-4 px-4 ${nStyle}">${safeTxt(r.name)}</td>
+                        <td class="py-4 px-4 text-slate-600 font-medium">${safeTxt(r.class)}</td>
+                        <td class="py-4 px-4 text-slate-600 text-sm">${safeTxt(r.school)}</td>
+                        <td class="py-4 px-4 text-center font-black text-indigo-700 text-xl">${r.score}</td>
+                    </tr>
+                `);
+            });
+        }
+        
+        function safeTxt(str) {
+            return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        // Init
+        renderBook();
+
+        // Ekspos fungsi ke global window agar HTML onClick dapat berfungsi karena menggunakan script type="module"
+        window.navTo = navTo;
+        window.turnPrev = turnPrev;
+        window.turnNext = turnNext;
+        window.beginQuiz = beginQuiz;
+        window.verifyAnswer = verifyAnswer;
+        window.loadNextQ = loadNextQ;
+    </script>
+</body>
+</html>
