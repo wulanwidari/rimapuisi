@@ -588,6 +588,9 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'rima-kuis-app';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         
+        // URL Google Script untuk menyimpan DAN membaca data papan peringkat
+        const googleScriptUrl = "https://script.google.com/macros/s/AKfycby9KkAfccnNBxprFTO1-Y6ZaWBbbgzJyJu39D7VD6jfXOf08I5ELqQJ11elvPQFuu4/exec";
+        
         let db, auth;
         let isDbReady = false;
 
@@ -613,6 +616,29 @@
         let bookPg = 1;
         const totalPg = 5;
         let ranks = []; // Data akan ditarik secara realtime dari Cloud Database
+
+        // Fungsi untuk mengambil seluruh data dari Google Sheets
+        async function fetchLeaderboardFromGS() {
+            if (!googleScriptUrl) return;
+            
+            const tbd = document.getElementById('board-body');
+            tbd.innerHTML = `<tr><td colspan="5" class="py-10 px-4 text-center text-indigo-500 font-bold"><i class="fas fa-spinner fa-spin mr-2"></i> Mengambil data Papan Peringkat...</td></tr>`;
+            
+            try {
+                const response = await fetch(googleScriptUrl);
+                const data = await response.json();
+                
+                // Urutkan nilai dari tertinggi (100) ke terendah (0)
+                const validData = data.filter(r => r.name && r.score !== undefined);
+                validData.sort((a, b) => b.score - a.score);
+                
+                ranks = validData;
+                refreshBoard();
+            } catch (error) {
+                console.error("Gagal menarik data Papan Peringkat dari Sheets:", error);
+                refreshBoard(); // fallback tampilkan apa yang ada di memori jika gagal
+            }
+        }
 
         function listenToLeaderboard() {
             if (!auth.currentUser || !isDbReady) return;
@@ -737,6 +763,9 @@
                 domApp.classList.remove('hidden');
                 domApp.classList.add('flex');
                 navTo('book');
+                
+                // Langsung tarik data papan peringkat di latar belakang saat login
+                fetchLeaderboardFromGS();
             }, 400);
         });
 
@@ -752,7 +781,10 @@
             const activeTab = tabs[target];
             activeTab.className = 'flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm transition-all flex items-center justify-center gap-2';
 
-            if (target === 'board') refreshBoard();
+            if (target === 'board') {
+                refreshBoard();
+                fetchLeaderboardFromGS(); // Selalu tarik data terbaru saat buka menu Papan Peringkat
+            }
         }
 
         function renderBook() {
@@ -969,34 +1001,32 @@
         async function recordScore(n, c, s, sc) {
             const dataToSave = { name: n, class: c, school: s, score: sc, time: Date.now() };
             
-            // =========================================================================
-            // INTEGRASI GOOGLE SHEETS
-            // TEMPEL (PASTE) URL WEB APP GOOGLE SCRIPT ANDA DI ANTARA TANDA KUTIP INI:
-            // =========================================================================
-            const googleScriptUrl = "https://script.google.com/macros/s/AKfycbw_IrdCyjWOmfzcWQgYVBpn6UHsaXtM_jZtnlMJCrgyTI6lAr8Yc7PIbhxe4lHT3cY/exec"; 
-            
             if (googleScriptUrl !== "") {
                 fetch(googleScriptUrl, {
                     method: 'POST',
                     mode: 'no-cors', // Mencegah error CORS di browser
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataToSave)
-                }).then(() => console.log("Data berhasil terkirim ke Google Sheets!"))
-                  .catch(e => console.error("Gagal mengirim ke Google Sheets:", e));
+                }).then(() => {
+                    console.log("Data berhasil terkirim ke Google Sheets!");
+                    // Tunggu sebentar agar sheet terupdate, lalu tarik data terbaru ke papan peringkat
+                    setTimeout(fetchLeaderboardFromGS, 2000); 
+                }).catch(e => console.error("Gagal mengirim ke Google Sheets:", e));
             }
-            // =========================================================================
-
+            
             if (isDbReady && auth.currentUser) {
                 try {
                     const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                    await addDoc(lbRef, dataToSave);
                     await addDoc(lbRef, dataToSave);
                     console.log("Skor berhasil disimpan ke Cloud!");
                 } catch(e) {
                     console.error("Error saving score:", e);
                 }
             } else {
-                // Fallback sementara jika cloud belum siap
-                ranks.push(dataToSave);
+                // Fallback memori sebelum data ditarik kembali dari Sheets
+                const exists = ranks.find(r => r.name === dataToSave.name && r.class === dataToSave.class);
+                if (!exists) ranks.push(dataToSave);
                 ranks.sort((a, b) => b.score - a.score || b.time - a.time);
                 refreshBoard();
             }
